@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe - Modern Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-attachment: fixed;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Glass Container */
+        .glass-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Score Board */
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            gap: 15px;
+        }
+
+        .score-item {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 15px;
+            text-align: center;
+            flex: 1;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .score-label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .score-value {
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 900;
+        }
+
+        /* Turn Indicator */
+        .turn-indicator {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .current-player {
+            display: inline-block;
+            padding: 5px 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            font-weight: 900;
+            font-size: 1.4rem;
+        }
+
+        /* Game Board */
+        #game {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+            perspective: 1000px;
+        }
+
+        .inbox {
+            aspect-ratio: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            font-size: 3rem;
+            font-weight: 900;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            user-select: none;
+        }
+
+        .inbox:hover:not(.filled) {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .inbox.filled {
+            cursor: not-allowed;
+            animation: pop 0.3s ease-out;
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.15);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Winner Animation */
+        .inbox.winner {
+            animation: celebrate 0.6s ease-in-out;
+            background: rgba(255, 255, 255, 0.4) !important;
+        }
+
+        @keyframes celebrate {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(1.1) rotate(5deg); }
+            75% { transform: scale(1.1) rotate(-5deg); }
+        }
+
+        /* Message Box */
+        .message {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+            animation: slideDown 0.4s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-text {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .message-emoji {
+            font-size: 2.5rem;
+        }
+
+        /* Buttons */
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .glass-container {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .inbox {
+                font-size: 2rem;
+            }
+
+            .score-value {
+                font-size: 1.5rem;
+            }
+
+            button {
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="glass-container">
+        <h1>TIC TAC TOE</h1>
+
+        <!-- Score Board -->
+        <div class="score-board">
+            <div class="score-item">
+                <div class="score-label">Player O</div>
+                <div class="score-value" id="scoreO">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">Draws</div>
+                <div class="score-value" id="scoreDraw">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">Player X</div>
+                <div class="score-value" id="scoreX">0</div>
+            </div>
+        </div>
+
+        <!-- Turn Indicator -->
+        <div class="turn-indicator">
+            Current Turn: <span class="current-player" id="turnDisplay">O</span>
+        </div>
+
+        <!-- Game Board -->
+        <div id="game">
+            <div class="inbox" data-index="0"></div>
+            <div class="inbox" data-index="1"></div>
+            <div class="inbox" data-index="2"></div>
+            <div class="inbox" data-index="3"></div>
+            <div class="inbox" data-index="4"></div>
+            <div class="inbox" data-index="5"></div>
+            <div class="inbox" data-index="6"></div>
+            <div class="inbox" data-index="7"></div>
+            <div class="inbox" data-index="8"></div>
+        </div>
+
+        <!-- Message Box -->
+        <div class="message" id="message">
+            <div class="message-emoji" id="messageEmoji">🎉</div>
+            <div class="message-text" id="messageText">Player O Wins!</div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="button-group">
+            <button id="resetBtn">Reset Game</button>
+            <button id="resetScoreBtn">Reset Score</button>
+        </div>
+    </div>
+
+    <script>
+
+        // Sounds
+const winSound = new Audio("win.mp3");
+
+// Mobile support ke liye
+
+winSound.preload = "auto";
+
+        // Game State
+        let board = ['', '', '', '', '', '', '', '', ''];
+        let currentPlayer = 'O';
+        let gameActive = true;
+        let scores = {
+            O: 0,
+            X: 0,
+            draw: 0
+        };
+
+        // Win Patterns
+        const winPatterns = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+            [0, 4, 8], [2, 4, 6]             // Diagonals
+        ];
+
+        // DOM Elements
+        const boxes = document.querySelectorAll('.inbox');
+        const messageBox = document.getElementById('message');
+        const messageText = document.getElementById('messageText');
+        const messageEmoji = document.getElementById('messageEmoji');
+        const turnDisplay = document.getElementById('turnDisplay');
+        const resetBtn = document.getElementById('resetBtn');
+        const resetScoreBtn = document.getElementById('resetScoreBtn');
+        const scoreO = document.getElementById('scoreO');
+        const scoreX = document.getElementById('scoreX');
+        const scoreDraw = document.getElementById('scoreDraw');
+
+        // Load scores from localStorage
+        loadScores();
+
+        // Event Listeners
+        boxes.forEach(box => {
+            box.addEventListener('click', handleBoxClick);
+        });
+
+        resetBtn.addEventListener('click', resetGame);
+        resetScoreBtn.addEventListener('click', resetScores);
+
+        // Handle Box Click
+        function handleBoxClick(e) {
+            const index = e.target.getAttribute('data-index');
+
+            if (board[index] !== '' || !gameActive) return;
+
+            // Update board and UI
+            board[index] = currentPlayer;
+            e.target.innerText = currentPlayer;
+            e.target.classList.add('filled');
+
+
+            // Check for winner
+            if (checkWinner()) {
+                endGame(`Player ${currentPlayer} Wins!`, '🎉');
+                scores[currentPlayer]++;
+                updateScoreDisplay();
+                saveScores();
+                return;
+            }
+
+            // Check for draw
+            if (!board.includes('')) {
+                endGame("It's a Draw!", '🤝');
+                scores.draw++;
+                updateScoreDisplay();
+                saveScores();
+                return;
+            }
+
+            // Switch player
+            currentPlayer = currentPlayer === 'O' ? 'X' : 'O';
+            turnDisplay.innerText = currentPlayer;
+        }
+
+        // Check Winner
+        function checkWinner() {
+            for (let pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    // Highlight winning boxes
+                    boxes[a].classList.add('winner');
+                    boxes[b].classList.add('winner');
+                    boxes[c].classList.add('winner');
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // End Game
+        function endGame(message, emoji) {
+    gameActive = false;
+    messageText.innerText = message;
+    messageEmoji.innerText = emoji;
+    messageBox.classList.add('show');
+
+    // Winning sound
+    winSound.currentTime = 0;
+    winSound.play();
+}
+
+
+        // Reset Game
+        function resetGame() {
+            board = ['', '', '', '', '', '', '', '', ''];
+            currentPlayer = 'O';
+            gameActive = true;
+            
+            boxes.forEach(box => {
+                box.innerText = '';
+                box.classList.remove('filled', 'winner');
+            });
+
+            messageBox.classList.remove('show');
+            turnDisplay.innerText = currentPlayer;
+        }
+
+        // Reset Scores
+        function resetScores() {
+            if (confirm('Are you sure you want to reset all scores?')) {
+                scores = { O: 0, X: 0, draw: 0 };
+                updateScoreDisplay();
+                saveScores();
+            }
+        }
+
+        // Update Score Display
+        function updateScoreDisplay() {
+            scoreO.innerText = scores.O;
+            scoreX.innerText = scores.X;
+            scoreDraw.innerText = scores.draw;
+        }
+
+        // Save Scores to localStorage
+        function saveScores() {
+            localStorage.setItem('ticTacToeScores', JSON.stringify(scores));
+        }
+
+        // Load Scores from localStorage
+        function loadScores() {
+            const savedScores = localStorage.getItem('ticTacToeScores');
+            if (savedScores) {
+                scores = JSON.parse(savedScores);
+                updateScoreDisplay();
+            }
+        }
+    </script>
+</body>
+</html>
